@@ -8,7 +8,8 @@ dataset = "NbAiLab/NCC"
 data = load_dataset(
     dataset,
     split="train",
-    streaming=True
+    streaming=True,
+    use_auth_token=st.secrets["hf_token"]
     )
 
 
