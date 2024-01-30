@@ -2,8 +2,13 @@ from datasets import load_dataset
 import streamlit as st
 import json
 import re
+import db
 
 dataset = "NbAiLab/NCC"
+
+# connect to db
+conn = db.connect()
+comments = db.collect(conn)
 
 data = load_dataset(
     dataset,
@@ -79,18 +84,19 @@ st.write(example)
 
 col1, col2, col3 = st.columns(3)
 
+def add_data(example):
+    example['date'] = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    db.insert(conn, example)
+
 with col1:
     if st.button("Crap"):
         example["label"] = "0"
-        st.session_state["label_file"].write(json.dumps(example) + "\n")
+        add_data(example)
 with col2:
     if st.button("Medicore"):
         example["label"] = "1"
-        st.session_state["label_file"].write(json.dumps(example) + "\n")
+        add_data(example)
 with col3:
     if st.button("Good"):
         example["label"] = "2"
-        st.session_state["label_file"].write(json.dumps(example) + "\n")
-
-
-st.session_state["label_file"].flush()
+        add_data(example)
