@@ -1,14 +1,30 @@
+#%%
 from datasets import load_dataset
 import streamlit as st
 import json
 import re
-import db
+from datetime import datetime
 
+#%%
+import gspread
+
+gcloud_secret = {key: st.secrets[key] for key in ['type',
+ 'project_id',
+ 'private_key_id',
+ 'private_key',
+ 'client_email',
+ 'client_id',
+ 'auth_uri',
+ 'token_uri',
+ 'auth_provider_x509_cert_url',
+ 'client_x509_cert_url',
+ 'universe_domain']}
+
+gc = gspread.service_account_from_dict(gcloud_secret)
+sh = gc.open("ncc-data-eval").sheet1
+
+#%%
 dataset = "NbAiLab/NCC"
-
-# connect to db
-conn = db.connect()
-comments = db.collect(conn)
 
 data = load_dataset(
     dataset,
@@ -75,28 +91,38 @@ if 'iter' not in st.session_state:
     iter = iter(data)
     st.session_state["iter"] = iter
 
-if 'label_file' not in st.session_state:
-    st.session_state["label_file"] = open("labels.jsonl", "w")
-
 st.title(dataset)
-example = next(st.session_state["iter"])
-st.write(example)
+st.markdown("For labelling the quality of NCC. Fill in a name and get started! (we should probably write some better guidelines here)")
+username = st.text_input("Your name", help="We use this to track who has labeled what")
+
+st.markdown("""---""")
+
+if username != "":
+    example = next(st.session_state["iter"])
+    st.write(example)
 
 col1, col2, col3 = st.columns(3)
 
+FIELDS = ['date','username','id','quality','doc_type', 'publish_year','lang_fasttext','lang_fasttext_conf','text']
 def add_data(example):
-    example['date'] = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-    db.insert(conn, example)
+    example['date'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    example['username'] = username
+    output = [example.get(key) for key in FIELDS]
+    sh.append_row(output)
 
 with col1:
     if st.button("Crap"):
-        example["label"] = "0"
+        example["quality"] = "0"
         add_data(example)
 with col2:
     if st.button("Medicore"):
-        example["label"] = "1"
+        example["quality"] = "1"
         add_data(example)
 with col3:
     if st.button("Good"):
-        example["label"] = "2"
+        example["quality"] = "2"
         add_data(example)
+
+#%%
+
+# %%
