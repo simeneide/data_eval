@@ -34,7 +34,7 @@ data = load_dataset(
     )
 
 
-FIELDS = ['date','username','id','quality','doc_type', 'publish_year','lang_fasttext','lang_fasttext_conf','text']
+FIELDS = ['date','username','id','quality','doc_type']
 
 
 def add_data(example, quality, username):
@@ -56,7 +56,6 @@ email_regex = re.compile(r'[\w\.-]+@[\w\.-]+')
 def replace_usernames_tweets(text, filler='@User'):
     # replace other user handles by filler
     text = str(text)
-    input_text = str(text)
     text = re.sub(username_regex, filler, text)
     # add spaces between, and remove double spaces again
     text = text.replace(filler, f' {filler} ')
@@ -65,7 +64,6 @@ def replace_usernames_tweets(text, filler='@User'):
 
 def replace_urls(text, filler='http://www.no'):
     text = str(text)
-    input_text = text
     # <url> is a marker used internally. use filler instead
     text = text.replace('<url>', filler)
     # replace other urls by filler
@@ -77,7 +75,6 @@ def replace_urls(text, filler='http://www.no'):
 
 def replace_email_addresses(text, filler='email@email.no'):
     text = str(text)
-    input_text = text
     text = re.sub(email_regex, filler, text)
     # add spaces between, and remove double spaces again
     text = text.replace(filler, f' {filler} ')
@@ -100,15 +97,17 @@ data = data.filter(filter_function)
 data = data.map(mapping_function)
 
 if 'iter' not in st.session_state:
+    print('iter')
     iter = iter(data)
     st.session_state["iter"] = iter
 if 'examples' not in st.session_state:
+    print('examples')
     st.session_state["examples"] = []
     for i in range(100):
         st.session_state["examples"].append(next(st.session_state["iter"]))
 
 st.title(dataset)
-st.markdown("For labelling the quality of NCC. Fill in a name and get started!")
+st.markdown(f"For labelling the quality of {dataset}. Fill in a name and get started!")
 username = st.text_input("Your name", help="We use this to track who has labeled what")
 
 st.markdown("""---""")
@@ -116,9 +115,9 @@ st.markdown("""---""")
 if username:
     if len(st.session_state["examples"]) > 0:
         example = st.session_state["examples"][0]
-        st.write(example)
+        st.text_area("Text Example:", value=example['text'], height=300, max_chars=None, key=None)
 
-        col1, col2, col3, col4 = st.columns(4)
+        col1, col2, col3 = st.columns(3)
 
         with col1:
             if st.button("Crap"):
@@ -135,13 +134,25 @@ if username:
                 st.session_state["examples"].pop(0)
                 add_data(example, 2, username)
                 st.rerun()
-        with col4:
-            if st.button("Skip"):
-                st.session_state["examples"].pop(0)
-                st.rerun()
+        #with col4:
+        #    if st.button("Skip"):
+        #        st.session_state["examples"].pop(0)
+        #        st.rerun()
+        st.markdown(
+"""The LANGUAGE or LENGTH of text does not matter. It is the quality of the text that matters:
+* GOOD: The text is natural, coherent and readable. Like in a page of a book, blog or news article. No encoding errors or wierd characters.
+* MEDICORE: The text is readable, but does not have a natural flow. It does have some coherent sentences. Like you would expect from a catalog, technical manual or reserach paper. 
+* CRAP: The text is not coherent. It is either gibberish or has encoding errors. 
+""")
     else:
         st.write("Congrats you just labaled 100 examples! Refresh to get more")
+        
 
 
 else:
-    st.markdown("""Here we need to add some text about how to label correctly\n * saasdad\n * adsasd""")
+    st.markdown(
+"""Here is how to label the examples correctly. The LANGUAGE or LENGTH of text does not matter. It is the quality of the text that matters:
+* GOOD: The text is natural, coherent and readable. Like in a page of a book, blog or news article. No encoding errors or wierd characters.
+* MEDICORE: The text is readable, but does not have a natural flow. It does have some coherent sentences. Like you would expect from a catalog, technical manual or reserach paper. 
+* CRAP: The text is not coherent. It is either gibberish or has encoding errors. 
+""")
