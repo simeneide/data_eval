@@ -25,6 +25,7 @@ sh = gc.open("ncc-data-eval").sheet1
 
 #%%
 dataset = "NbAiLab/NCC"
+n_examples = 100
 
 data = load_dataset(
     dataset,
@@ -42,7 +43,7 @@ def add_data(example, quality, username):
     example['username'] = username
     example['quality'] = quality
     output = [example.get(key) for key in FIELDS]
-    print(output)
+    print(example)
     sh.append_row(output)
 
 
@@ -92,7 +93,7 @@ def mapping_function(example):
     example['text'] = replace_email_addresses(example['text'])
     return example
 
-data = data.shuffle(buffer_size=10000)
+data = data.shuffle(buffer_size=20000)
 data = data.filter(filter_function)
 data = data.map(mapping_function)
 
@@ -103,8 +104,10 @@ if 'iter' not in st.session_state:
 if 'examples' not in st.session_state:
     print('examples')
     st.session_state["examples"] = []
-    for i in range(100):
+    for i in range(n_examples):
         st.session_state["examples"].append(next(st.session_state["iter"]))
+if 'n' not in st.session_state:
+    st.session_state["n"] = 0
 
 st.title(dataset)
 st.markdown(f"For labelling the quality of {dataset}. Fill in a name and get started!")
@@ -113,26 +116,26 @@ username = st.text_input("Your name", help="We use this to track who has labeled
 st.markdown("""---""")
 
 if username:
-    if len(st.session_state["examples"]) > 0:
-        example = st.session_state["examples"][0]
-        st.text_area("Text Example:", value=example['text'], height=300, max_chars=None, key=None)
+    if st.session_state["n"] < n_examples:
+        example = st.session_state["examples"][st.session_state["n"]]
+        st.text_area(f"Text Example ({st.session_state['n']+1} of {n_examples}):", value=example['text'], height=300, max_chars=None, key=None)
 
         col1, col2, col3 = st.columns(3)
 
         with col1:
             if st.button("Crap"):
-                st.session_state["examples"].pop(0)
                 add_data(example, 0, username)
+                st.session_state["n"] += 1
                 st.rerun()
         with col2:
             if st.button("Medicore"):
-                st.session_state["examples"].pop(0)
                 add_data(example, 1, username)
+                st.session_state["n"] += 1
                 st.rerun()
         with col3:
             if st.button("Good"):
-                st.session_state["examples"].pop(0)
                 add_data(example, 2, username)
+                st.session_state["n"] += 1
                 st.rerun()
         #with col4:
         #    if st.button("Skip"):
