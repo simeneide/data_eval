@@ -34,6 +34,18 @@ data = load_dataset(
     )
 
 
+FIELDS = ['date','username','id','quality','doc_type', 'publish_year','lang_fasttext','lang_fasttext_conf','text']
+
+
+def add_data(example, quality, username):
+    example['date'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    example['username'] = username
+    example['quality'] = quality
+    output = [example.get(key) for key in FIELDS]
+    print(output)
+    sh.append_row(output)
+
+
 #### functions from NB scriot
 
 # compile regexes
@@ -90,39 +102,46 @@ data = data.map(mapping_function)
 if 'iter' not in st.session_state:
     iter = iter(data)
     st.session_state["iter"] = iter
+if 'examples' not in st.session_state:
+    st.session_state["examples"] = []
+    for i in range(100):
+        st.session_state["examples"].append(next(st.session_state["iter"]))
 
 st.title(dataset)
-st.markdown("For labelling the quality of NCC. Fill in a name and get started! (we should probably write some better guidelines here)")
+st.markdown("For labelling the quality of NCC. Fill in a name and get started!")
 username = st.text_input("Your name", help="We use this to track who has labeled what")
 
 st.markdown("""---""")
 
-if username != "":
-    example = next(st.session_state["iter"])
-    st.write(example)
+if username:
+    if len(st.session_state["examples"]) > 0:
+        example = st.session_state["examples"][0]
+        st.write(example)
 
-col1, col2, col3 = st.columns(3)
+        col1, col2, col3, col4 = st.columns(4)
 
-FIELDS = ['date','username','id','quality','doc_type', 'publish_year','lang_fasttext','lang_fasttext_conf','text']
-def add_data(example):
-    example['date'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    example['username'] = username
-    output = [example.get(key) for key in FIELDS]
-    sh.append_row(output)
+        with col1:
+            if st.button("Crap"):
+                st.session_state["examples"].pop(0)
+                add_data(example, 0, username)
+                st.rerun()
+        with col2:
+            if st.button("Medicore"):
+                st.session_state["examples"].pop(0)
+                add_data(example, 1, username)
+                st.rerun()
+        with col3:
+            if st.button("Good"):
+                st.session_state["examples"].pop(0)
+                add_data(example, 2, username)
+                st.rerun()
+        with col4:
+            if st.button("Skip"):
+                st.session_state["examples"].pop(0)
+                st.rerun()
+    else:
+        st.write("Congrats you just labaled 100 examples! Refresh to get more")
 
-with col1:
-    if st.button("Crap"):
-        example["quality"] = "0"
-        add_data(example)
-with col2:
-    if st.button("Medicore"):
-        example["quality"] = "1"
-        add_data(example)
-with col3:
-    if st.button("Good"):
-        example["quality"] = "2"
-        add_data(example)
 
-#%%
-
-# %%
+else:
+    st.markdown("""Here we need to add some text about how to label correctly\n * saasdad\n * adsasd""")
