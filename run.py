@@ -25,6 +25,7 @@ sh = gc.open("ncc-data-eval").sheet1
 
 #%%
 dataset = "NbAiLab/NCC"
+skip_doc_types = ['newspapers_online_nb', 'newspapers_online_nn']
 n_examples = 100
 
 data = load_dataset(
@@ -85,7 +86,7 @@ def replace_email_addresses(text, filler='email@email.no'):
 ### end functions from NB script
 
 def filter_function(example):
-    return example['doc_type'] != 'newspaper_ocr'
+    return example['doc_type'] not in skip_doc_types
 
 def mapping_function(example):
     example['text'] = replace_usernames_tweets(example['text'])
@@ -143,6 +144,7 @@ if username:
 * MEDICORE: The text is readable, but does not have a natural flow. It does have some coherent sentences. Like you would expect from a catalog, technical manual or other non-full text with parsed tables etc. 
 * CRAP: The text is not coherent. It is either gibberish or has encoding errors. 
 """)
+        st.write(example)
     else:
         st.write("Congrats you just labaled 100 examples! Refresh to get more")
         
