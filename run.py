@@ -140,7 +140,7 @@ if username:
         st.markdown(
 """The LANGUAGE or LENGTH of text does not matter. It is the quality of the text that matters:
 * GOOD: The text is natural, coherent and readable. Like in a page of a book, blog or news article. No encoding errors or wierd characters.
-* MEDICORE: The text is readable, but does not have a natural flow. It does have some coherent sentences. Like you would expect from a catalog, technical manual or reserach paper. 
+* MEDICORE: The text is readable, but does not have a natural flow. It does have some coherent sentences. Like you would expect from a catalog, technical manual or other non-full text with parsed tables etc. 
 * CRAP: The text is not coherent. It is either gibberish or has encoding errors. 
 """)
     else:
